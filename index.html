@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jacobi Solver SPA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="styleG.css">
+</head>
+<body>
+  <div class="container py-4">
+    <h1 class="text-center mb-1 fw-bold text-primary">
+      METODE JACOBI
+    </h1>
+
+    <p class="text-center text-secondary mb-4">
+      Sistem Persamaan Linear Dengan Visualisasi Konvergensi
+    </p>
+
+    <div class="card p-4 mb-3">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label">Jumlah Variabel</label>
+            <select id="n" class="form-select">
+              <option>2</option><option selected>3</option><option>4</option><option>5</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Toleransi Error</label>
+            <input id="tol" type="number" class="form-control" value="0.001" step="0.0001">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Maks Iterasi</label>
+          <input id="maxIter" type="number" class="form-control" value="50">
+        </div>
+      </div>
+
+      <hr>
+      <h5>Persamaan</h5>
+      <div id="equations"></div>
+
+      <hr>
+      <h5>Tebakan Awal</h5>
+      <div id="guesses"></div>
+
+      <button class="btn btn-primary mt-3" onclick="solveJacobi()">Hitung</button>
+    </div>
+
+    <div id="alerts"></div>
+
+    <div id="resultArea" style="display:none">
+      <div class="card p-4 mb-3">
+        <div id="status"></div>
+        <div id="hasil"></div>
+      </div>
+    </div>
+
+    <div id="chartArea" class="card p-4 mb-3" style="display:none">
+      <h4>Grafik Konvergensi</h4>
+      <canvas id="chart"></canvas>
+    </div>
+
+    <div id="tableArea" class="card p-4" style="display:none">
+      <h4>Tabel Iterasi</h4>
+      <div class="table-responsive">
+        <table class="table table-bordered" id="table"></table>
+      </div>
+    </div>
+  </div>
+  
+
+<script>
+  let chart;
+
+  document.getElementById('n').addEventListener('change',generate);
+  generate();
+
+  function generate(){
+  const n=+document.getElementById('n').value;
+  const eq=document.getElementById('equations');
+  const guess=document.getElementById('guesses');
+  eq.innerHTML='';
+  guess.innerHTML='';
+
+  for(let i=0;i<n;i++){
+    let row='<div class="eq-row">';
+    for(let j=0;j<n;j++){
+        if(j>0) row+=`<span class="sign" id="s_${i}_${j}">+</span>`;
+        row+=`<input type="number" value="${i===j?n+2:1}" class="form-control coef coefField" id="a_${i}_${j}"><span>x${j+1}</span>`;
+    }
+    row+=`<span>=</span><input type="number" value="${n+i+5}" class="form-control coef" id="b_${i}"></div>`;
+    eq.innerHTML+=row;
+  }
+
+  for(let i=0;i<n;i++){
+    guess.innerHTML+=`<div class="input-group mb-2"><span class="input-group-text">x${i+1}</span><input type="number" value="0" class="form-control" id="g_${i}"></div>`;
+  }
+
+  document.querySelectorAll('.coefField').forEach(x=>x.addEventListener('input',updateSigns));
+  updateSigns();
+  }
+
+  function updateSigns(){
+  const n=+document.getElementById('n').value;
+  for(let i=0;i<n;i++){
+    for(let j=1;j<n;j++){
+    let v=parseFloat(document.getElementById(`a_${i}_${j}`).value)||0;
+    document.getElementById(`s_${i}_${j}`).textContent=v<0?'−':'+';
+    }
+  }
+  }
+
+  function dominant(A){
+  for(let i=0;i<A.length;i++){
+    let d=Math.abs(A[i][i]),s=0;
+    for(let j=0;j<A.length;j++) if(i!==j) s+=Math.abs(A[i][j]);
+    if(d<s) return false;
+  }
+  return true;
+  }
+
+  function solveJacobi(){
+  const n=+document.getElementById('n').value;
+  const tol=parseFloat(document.getElementById('tol').value);
+  const maxIter=parseInt(document.getElementById('maxIter').value);
+
+  let A=[],B=[],X=[];
+
+  for(let i=0;i<n;i++){
+    let row=[];
+    for(let j=0;j<n;j++) row.push(parseFloat(document.getElementById(`a_${i}_${j}`).value));
+    A.push(row);
+    B.push(parseFloat(document.getElementById(`b_${i}`).value));
+    X.push(parseFloat(document.getElementById(`g_${i}`).value));
+  }
+
+  for(let i=0;i<n;i++){
+    if(A[i][i]===0){alert('Diagonal utama tidak boleh 0');return;}
+  }
+
+  document.getElementById('alerts').innerHTML='';
+  if(!dominant(A)){
+    document.getElementById('alerts').innerHTML='<div class="alert alert-warning">Matriks tidak dominan diagonal. Metode Jacobi mungkin tidak konvergen.</div>';
+  }
+
+  let old=[...X];
+  let history=[{iter:0,x:[...old],error:0}];
+  let errors=[];
+  let converged=false;
+
+  for(let k=1;k<=maxIter;k++){
+    let neu=new Array(n);
+
+    for(let i=0;i<n;i++){
+      let sigma=0;
+      for(let j=0;j<n;j++) if(i!==j) sigma+=A[i][j]*old[j];
+      neu[i]=(B[i]-sigma)/A[i][i];
+    }
+
+    let err=0;
+    for(let i=0;i<n;i++) err=Math.max(err,Math.abs(neu[i]-old[i]));
+
+    history.push({iter:k,x:[...neu],error:err});
+    errors.push(err);
+
+    if(err<tol){converged=true;break;}
+    old=[...neu];
+  }
+
+  render(history,errors,converged,tol);
+  }
+
+  function fmt(v){return Number(v).toFixed(8);}
+
+  function render(history,errors,converged,tol){
+    document.getElementById('chartArea').style.display='block';
+    document.getElementById('tableArea').style.display='block';
+    document.getElementById('resultArea').style.display='block';
+
+  const last=history[history.length-1];
+
+  document.getElementById('status').innerHTML=converged
+  ? '<div class="alert alert-success"><h5>✅ KONVERGEN</h5>Error sudah lebih kecil dari toleransi.</div>'
+  : '<div class="alert alert-danger"><h5>❌ TIDAK KONVERGEN</h5>Maksimum iterasi tercapai.</div>';
+
+  let h='';
+  last.x.forEach((v,i)=>h+=`<p><b>x${i+1}</b> = ${fmt(v)}</p>`);
+  h+=`<p><b>Iterasi:</b> ${last.iter}</p>`;
+  h+=`<p><b>Error Akhir:</b> <span class="text-danger fw-bold">${fmt(last.error)}</span></p>`;
+  document.getElementById('hasil').innerHTML=h;
+
+  let t='<thead><tr><th>Iterasi</th>';
+  for(let i=0;i<last.x.length;i++) t+=`<th>x${i+1}</th>`;
+  t+='<th>Error</th></tr></thead><tbody>';
+
+  history.forEach((r,idx)=>{
+    let cls=(idx===history.length-1 && converged)?'converged-row':'';
+    t+=`<tr class="${cls}"><td>${r.iter}</td>`;
+    r.x.forEach(v=>t+=`<td>${fmt(v)}</td>`);
+    t+=`<td>${fmt(r.error)}</td></tr>`;
+  });
+
+  t+='</tbody>';
+  document.getElementById('table').innerHTML=t;
+
+  if(chart) chart.destroy();
+
+  chart=new Chart(document.getElementById('chart'),{
+    type:'line',
+    data:{
+    labels:errors.map((_,i)=>i+1),
+    datasets:[
+      {label:'Error', data:errors,
+      tension:0.3, borderWidth:3,
+      pointRadius:4, pointHoverRadius:6},
+      {label:'Batas Toleransi', data:new Array(errors.length).fill(tol),
+      borderDash:[5,5],pointRadius:0}
+    ]
+    },
+    options:{
+    scales:{
+      x:{title:{display:true,text:'Iterasi ke-n'}},
+      y:{
+        title:{display:true,text:'Nilai Error'},
+        ticks:{callback:(v)=>Number(v).toFixed(3)}
+      }
+    }
+    }
+  });
+  }
+</script>
+</body>
+</html>
