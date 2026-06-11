@@ -1,0 +1,167 @@
+body{
+    background:#303740;
+    font-family:'Segoe UI',sans-serif;
+}
+
+/* CARD BOOTSTRAP */
+.card{
+    border:none !important;
+    border-radius:20px !important;
+    background: #4a75a5;
+    box-shadow:
+        0 4px 12px rgba(0,0,0,.05),
+        0 12px 30px rgba(0,0,0,.08);
+}
+
+/* FORM */
+.form-control,
+.form-select{
+    border-radius:20px;
+    border: 1px solid #456188;
+    background: #bababa;
+    border-left: 5px solid #000000 !important;
+}
+
+.form-control:focus,
+.form-select:focus{
+    border-color:#2563eb;
+    box-shadow:0 0 0 .2rem rgba(37,99,235,.15)
+}
+
+/* BARIS PERSAMAAN */
+.eq-row{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:12px;
+    margin-bottom:12px;;
+}
+
+/* INPUT KOEFISIEN */
+.coef{
+    width:50px;
+    text-align:center;
+    border-radius:20px !important;
+    background: #bababa;
+}
+
+/* TANDA + DAN - */
+.sign{
+    width:12px;
+    text-align:center;
+    font-size:1.2rem;
+    font-weight:700;
+    color:#27282a;
+}
+
+/* TOMBOL */
+.btn-primary{
+    border-radius:12px;
+    font-weight:600;
+    padding:10px 24px;
+}
+
+/* ALERT */
+.alert{
+    border:none;
+    border-radius:15px;
+}
+
+/* STATUS KONVERGEN */
+.alert-success{
+    background:rgba(0, 0, 0, 0.5);
+    color:#0ba427;
+}
+
+.alert-danger{
+    background:rgba(239,68,68,.3);
+    color:#cc1111;
+}
+
+/* TABEL */
+.table{
+    vertical-align:middle;
+}
+
+.table thead th{
+    text-align:center;
+    background: #cacaca;
+}
+
+.table tbody td{
+    text-align:center;
+    background: #cacaca;
+}
+
+/* BARIS TERAKHIR KONVERGEN */
+.converged-row{
+    background:#d1fae5 !important;
+    font-weight:bold;
+}
+
+.converged-row td{
+    color:#0ba427;
+}
+
+/* GRAFIK */
+canvas{
+    max-height:400px;
+    background: #cacaca;
+}
+
+/* HASIL AKHIR */
+#hasil{
+    background:#cacaca;
+    border-left:5px solid #0c0c0c;
+    padding:15px;
+    border-radius:12px;
+}
+
+#hasil p{
+    font-size:1.05rem;
+    margin-bottom:7px;
+}
+
+#hasil b{
+    color:#2563eb;
+}
+
+.input-group-text{
+    background:#bababa;
+    color:#151414;
+    border:1px solid #456188;
+    border-radius: 20px 0 0 20px !important;
+    border-left: 5px solid #000000 !important;
+}
+
+.container{
+    max-width:1200px;
+}
+
+h1{
+    letter-spacing:1px;
+}
+
+.card{
+    transition:.3s;
+}
+
+.card:hover{
+    transform:translateY(-2px);
+    box-shadow:
+        0 8px 20px rgba(0,0,0,.08),
+        0 20px 40px rgba(0,0,0,.10);
+}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+
+    .coef{
+        width:65px;
+    }
+
+    .eq-row{
+        gap:6px;
+    }
+
+}
